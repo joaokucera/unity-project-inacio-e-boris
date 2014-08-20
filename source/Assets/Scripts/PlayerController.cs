@@ -4,24 +4,25 @@ using System.Collections;
 public class PlayerController : MonoBehaviour {
 
 	public float playerSpeed = 5f;
-	private float jumpAccell = 20f;
-	private float jumpSpeed = 0;
-	private float jumpMaxSpeed = 6f;
-	private float jumpMaxHeight = 3f;
+	public static int playerLevel = 1;
+
+	private float jumpMaxHeight = 300f;
 	private bool jumpingUp = false;
-	private bool jumpingDown = false;
 	private bool dead = false;
 	private float dyingTime = 0;
 	private float originalY = 0;
+	private bool grounded = false;
 
 	// Use this for initialization
 	void Start () {
 		originalY = transform.position.y;
+		playerLevel = 1;
+		Debug.Log ("Player Level 1!");
 	}
 	
 	// Update is called once per frame
 	void Update () {
-		//restarting level after death
+		//MORTE
 		if(dead)
 		{
 			renderer.material.color = Color.red;
@@ -33,48 +34,73 @@ public class PlayerController : MonoBehaviour {
 			return;
 		}
 
-		float y = 0;
-		float fireInput = Input.GetAxis ("Fire1");
+		transform.Translate (new Vector3 (playerSpeed * Time.deltaTime, 0, 0));
 
-		if(fireInput != 0 && !jumpingUp && !jumpingDown)
+		//PULO
+		float fireInput = Input.GetAxis ("Fire1");
+		if(fireInput != 0 && grounded && !jumpingUp)
 		{
+			rigidbody2D.AddForce(new Vector3(0, jumpMaxHeight), ForceMode2D.Force);
+			grounded = false;
 			jumpingUp = true;
 		}
 
-		jumpSpeed = jumpSpeed + (jumpAccell * Time.deltaTime);
-		if(jumpSpeed > jumpMaxSpeed)
-		{
-			jumpSpeed = jumpMaxSpeed;
-		}
+		//VERIFICA DISTANCIA DO JOGADOR
+		SetLevel ();
+	}
 
-		if (jumpingUp) 
+	void FixedUpdate()
+	{
+		grounded = (rigidbody2D.velocity.y == 0);
+	}
+
+	void OnCollisionEnter2D(Collision2D other)
+	{
+		jumpingUp = false;
+		if(other.gameObject.tag == "Ground")
 		{
-			y = (jumpSpeed * Time.deltaTime);
-			if (transform.position.y >= jumpMaxHeight) {
-				jumpingDown = true;
-				jumpingUp = false;
-				jumpSpeed = 0;
-			}
-		} else {
-			if (jumpingDown) {
-				y = - (jumpSpeed * Time.deltaTime);
-				if((transform.position.y + y) <= originalY){
-					jumpingDown = false;
-					jumpSpeed = 0;
-					y = originalY - transform.position.y;
+			foreach(var c in other.contacts)
+			{
+				//VERIFICA COLISAO FRONTAL COM GROUND
+				if( c.normal.x != 0 && c.normal.y == 0 && c.collider.gameObject.transform.position.y > -0.25){
+					if(transform.position.x < (c.collider.gameObject.transform.position.x - c.collider.gameObject.renderer.bounds.size.x * 0.5f))
+					{
+						dead = true;
+
+						break;
+					}
 				}
 			}
 		}
 
-		transform.Translate (new Vector3 (playerSpeed * Time.deltaTime, y, 0));
+		//CAIU NO BURACO OU TOCOU OBSTACULO
+		if(other.gameObject.tag == "Void" || other.gameObject.tag== "Obstacle")
+		{
+			dead = true;
+		}
 	}
 
-	void OnTriggerEnter2D(Collider2D other)
+	void SetLevel()
 	{
-		if (other.gameObject.tag== "Obstacle") {
-			Debug.Log ("Collided!!!");
-			dead = true;
-
+		if(transform.position.x > 100 && transform.position.x < 200)
+		{
+			playerLevel = 2;
+			Debug.Log ("Player Level 2!!");
+		}
+		else{
+			if(transform.position.x > 200 && transform.position.x < 400)
+			{
+				playerLevel = 3;
+				Debug.Log ("Player Level 3!!!");
+			}
+			else
+			{
+				if(transform.position.x > 400)
+				{
+					playerLevel = 4;
+					Debug.Log ("Player Level 4!!!!");
+				}
+			}
 		}
 	}
 }

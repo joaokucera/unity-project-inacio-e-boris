@@ -9,10 +9,10 @@ public class CameraController : MonoBehaviour {
 	
 	}
 	
-	// Update is called once per frame
+	// Segue o jogador
 	void Update () {
 		Vector3 pos = player.transform.position;
-		pos.x += 5;
+		pos.x += 6;
 		pos.y = transform.position.y;
 		pos.z = transform.position.z;
 		transform.position = Vector3.Lerp (transform.position, pos, speed * Time.deltaTime);
